@@ -39,7 +39,6 @@ class SelfAttentionT(nn.Module):
         output = output.view(B,N,D,T)
         return output
 
-#####如果还不好用，就更换编码方式用attention编码后再往频域去转参考Fredf
 from torchdiffeq import odeint_adjoint as odeint
 class GCN_F(nn.Module):
     def __init__(self):
