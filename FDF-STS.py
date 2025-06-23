@@ -60,9 +60,9 @@ class GCN_F(nn.Module):
         self.map_freq = nn.Sequential(nn.Linear(96,32),DyT(),nn.Dropout(0.2),nn.Linear(32,1))
         self.Linear_freq = nn.Linear(1,32)
         # ODE相关
-        self.ode_att = nn.Sequential(SelfAttentionT(96),DyT(),nn.Dropout(0.2),nn.Linear(96,32),DyT(),nn.Dropout(0.2),nn.Linear(32,1))
+        self.ode_att = nn.Sequential(SelfAttentionT(96),DyT(),nn.Dropout(0.2),nn.Linear(96,32),DyT(),nn.Dropout(0.2))
         self.eps = nn.Parameter(torch.zeros(1))
-        self.ode_gin = nn.Sequential(nn.Linear(25,32,bias=False),DyT(),nn.Dropout(0.2),nn.Linear(32,1))
+        self.ode_gin = nn.Sequential(nn.Linear(25,32,bias=False),DyT(),nn.Dropout(0.2))
         self.ode_encoder = nn.Sequential(nn.Linear(64,128),DyT(),nn.Dropout(0.2))
         self.ode = dyna_f()
         self.param = nn.Sequential(nn.Linear(128,49),nn.Dropout(0.2)) 
@@ -97,8 +97,8 @@ class GCN_F(nn.Module):
         data_frequence = self.freq_decoder(data_frequence_intemporal).permute(0,3,2,1) #[B,N,T,49]
         
         # ODE动力学
-        feature_temporal_ode = self.ode_att(feature_spatio_temporal).squeeze() #[B,N,D*2]
-        feature_spatio_temporal_ode = self.ode_gin(((1+self.eps)*feature_temporal_ode+torch.matmul(graph_data,feature_temporal_ode)).permute(0,2,1))#[B,D*2]
+        feature_temporal_ode = torch.sum(self.ode_att(feature_spatio_temporal),dim=2).squeeze() #[B,N,D*2]
+        feature_spatio_temporal_ode = torch.sum(self.ode_gin(((1+self.eps)*feature_temporal_ode+torch.matmul(graph_data,feature_temporal_ode))),dim=2)#[B,D*2]
         ini_ode = self.ode_encoder(feature_spatio_temporal_ode.squeeze())
         t_span = torch.arange(0.1,9.7,step=0.1,dtype=torch.float32).to(device)  ##### 后面的96是预测步长
         hid_ode = odeint(self.ode, ini_ode, t_span) #[97,B,32]
