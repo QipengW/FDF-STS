@@ -40,7 +40,7 @@ class SelfAttentionT(nn.Module):
         return output
 
 from torchdiffeq import odeint_adjoint as odeint
-class GCN_F(nn.Module):
+class FDF_STS(nn.Module):
     def __init__(self):
         super().__init__()
         # 节点嵌入
